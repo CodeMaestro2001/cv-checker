@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and runtime files
+*.db
+*.sqlite
+*.sqlite3
+storage/
+uploads/
+logs/
+*.log
+
+# ML artifacts
+models/
+*.joblib
+*.pkl
+*.pickle
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Docker / OS / IDE
+.docker/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build outputs
+build/
+dist/
+*.egg-info/

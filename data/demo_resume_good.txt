@@ -1,0 +1,12 @@
+Alex Perera
+alex.perera@example.com
++94 77 123 4567
+
+Machine Learning Engineer with 4 years of experience in Python, Pandas, NumPy, scikit-learn,
+NLP, FastAPI, Docker, PostgreSQL, embeddings, Streamlit, and data analysis.
+
+Education
+Bachelor degree in Computer Science
+
+Projects
+Built an AI resume screening API with FastAPI, SQL, machine learning, and semantic similarity.

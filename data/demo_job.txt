@@ -1,0 +1,5 @@
+Machine Learning Engineer
+
+We need a Machine Learning Engineer with 3+ years of experience building production ML systems.
+Required skills include Python, Pandas, scikit-learn, NLP, FastAPI, Docker, SQL, and embeddings.
+A bachelor degree is required. Experience with XGBoost, cloud deployment, and Streamlit is preferred.
