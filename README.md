@@ -58,7 +58,7 @@ DATABASE_URL=postgresql+psycopg://resume:resume@db:5432/resume_screening
 
 ## Notes
 
-The default scorer is a local hybrid scorer. It combines skill overlap, semantic similarity, experience fit, and education fit. A hosted LLM can be added later behind `ENABLE_HOSTED_LLM` for enhanced extraction or recruiter-facing summaries.
+The default scorer is a local hybrid scorer. It combines skill overlap, semantic similarity, experience fit, and education fit. When `ENABLE_ML_MODEL=true` and `MATCH_MODEL_PATH` points to a trained artifact, the API uses that trained classifier for the final match score while keeping the hybrid component scores for explainability. A hosted LLM can be added later behind `ENABLE_HOSTED_LLM` for enhanced extraction or recruiter-facing summaries.
 
 For experimentation with heavier ML models, install:
 
@@ -79,3 +79,12 @@ Training data must contain these columns:
 - `label`
 
 Labels can be `poor`, `average`, `good` or numeric `0`, `1`, `2`. The script compares Logistic Regression, Random Forest, and XGBoost when XGBoost is installed, then saves `models/match_model.joblib` and `models/metrics.json`.
+
+The API loads the saved model automatically by default:
+
+```env
+ENABLE_ML_MODEL=true
+MATCH_MODEL_PATH=models/match_model.joblib
+```
+
+Set `ENABLE_ML_MODEL=false` to use only the baseline weighted scorer.

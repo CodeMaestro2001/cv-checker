@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.schemas import CandidateRead, JobCreate, JobRead, MatchRead, ScoreRequest
 from app.services.json_utils import loads_list
 from app.services.nlp import extract_job, extract_profile
+from app.services.ml_matching import apply_ml_matcher
 from app.services.repository import (
     candidate_to_schema,
     create_candidate,
@@ -91,7 +92,11 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)) -> Candidate
 
 
 @router.post("/matches/score", response_model=MatchRead)
-def score_candidate(payload: ScoreRequest, db: Session = Depends(get_db)) -> MatchRead:
+def score_candidate(
+    payload: ScoreRequest,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> MatchRead:
     candidate = db.scalar(
         select(models.Candidate).options(joinedload(models.Candidate.profile)).where(models.Candidate.id == payload.candidate_id)
     )
@@ -101,7 +106,7 @@ def score_candidate(payload: ScoreRequest, db: Session = Depends(get_db)) -> Mat
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    score = _score(candidate, job)
+    score = _score(candidate, job, settings)
     match = save_match(db, candidate.id, job.id, score)
     match.candidate = candidate
     match.job = job
@@ -109,21 +114,22 @@ def score_candidate(payload: ScoreRequest, db: Session = Depends(get_db)) -> Mat
 
 
 @router.get("/jobs/{job_id}/rankings", response_model=list[MatchRead])
-def rank_candidates(job_id: int, db: Session = Depends(get_db)) -> list[MatchRead]:
+def rank_candidates(
+    job_id: int,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> list[MatchRead]:
+    return _rank_candidates(job_id, db, settings)
+
+
+def _rank_candidates(job_id: int, db: Session, settings: Settings) -> list[MatchRead]:
     job = db.get(models.JobDescription, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     candidates = db.scalars(select(models.Candidate).options(joinedload(models.Candidate.profile))).all()
     for candidate in candidates:
-        existing = db.scalar(
-            select(models.MatchResult).where(
-                models.MatchResult.candidate_id == candidate.id,
-                models.MatchResult.job_id == job.id,
-            )
-        )
-        if not existing:
-            save_match(db, candidate.id, job.id, _score(candidate, job))
+        save_match(db, candidate.id, job.id, _score(candidate, job, settings))
 
     matches = db.scalars(
         select(models.MatchResult)
@@ -135,8 +141,12 @@ def rank_candidates(job_id: int, db: Session = Depends(get_db)) -> list[MatchRea
 
 
 @router.get("/jobs/{job_id}/rankings.csv")
-def export_rankings(job_id: int, db: Session = Depends(get_db)) -> StreamingResponse:
-    rankings = rank_candidates(job_id, db)
+def export_rankings(
+    job_id: int,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> StreamingResponse:
+    rankings = _rank_candidates(job_id, db, settings)
     output = StringIO()
     writer = csv.writer(output)
     writer.writerow(["candidate_id", "candidate_name", "overall_score", "matched_skills", "missing_skills", "recommendation"])
@@ -159,9 +169,9 @@ def export_rankings(job_id: int, db: Session = Depends(get_db)) -> StreamingResp
     )
 
 
-def _score(candidate: models.Candidate, job: models.JobDescription):
+def _score(candidate: models.Candidate, job: models.JobDescription, settings: Settings):
     profile = candidate.profile
-    return score_match(
+    baseline = score_match(
         ScoreInput(
             candidate_text=candidate.raw_text,
             job_text=job.raw_text,
@@ -174,3 +184,4 @@ def _score(candidate: models.Candidate, job: models.JobDescription):
             education_requirements=loads_list(job.education_requirements),
         )
     )
+    return apply_ml_matcher(baseline, candidate.raw_text, job.raw_text, settings)

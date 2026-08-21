@@ -15,5 +15,6 @@ RUN pip install --no-cache-dir -r requirements-ui.txt
 COPY app app
 COPY ui ui
 COPY data data
+COPY models models
 
 EXPOSE 8000 8501

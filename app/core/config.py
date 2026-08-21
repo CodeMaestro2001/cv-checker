@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     allowed_origins: str = "*"
     max_upload_mb: int = Field(default=8, ge=1, le=50)
     enable_hosted_llm: bool = False
+    enable_ml_model: bool = True
+    match_model_path: str = "models/match_model.joblib"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
