@@ -65,3 +65,13 @@ def test_end_to_end_api_flow(client: TestClient):
     rankings_response = client.get(f"/jobs/{job['id']}/rankings")
     assert rankings_response.status_code == 200
     assert rankings_response.json()[0]["candidate_name"] == "Alex Perera"
+
+    delete_response = client.delete(f"/candidates/{candidate['id']}")
+    assert delete_response.status_code == 204
+
+    missing_candidate_response = client.get(f"/candidates/{candidate['id']}")
+    assert missing_candidate_response.status_code == 404
+
+    candidates_response = client.get("/candidates")
+    assert candidates_response.status_code == 200
+    assert candidates_response.json() == []

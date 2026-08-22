@@ -52,6 +52,13 @@ def create_job(db: Session, title: str, company: str | None, raw_text: str, job_
     return job
 
 
+def delete_candidate(db: Session, candidate: models.Candidate) -> None:
+    candidate_id = candidate.id
+    create_audit_event(db, "candidate_deleted", "candidate", candidate_id, {"filename": candidate.source_filename})
+    db.delete(candidate)
+    db.commit()
+
+
 def save_match(db: Session, candidate_id: int, job_id: int, score: ScoreOutput) -> models.MatchResult:
     existing = db.scalar(
         select(models.MatchResult).where(

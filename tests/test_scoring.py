@@ -19,3 +19,21 @@ def test_score_match_identifies_missing_skills():
     assert score.overall_score > 70
     assert "nlp" in score.missing_skills
     assert "python" in score.matched_skills
+
+
+def test_score_match_treats_bsc_as_bachelor_level():
+    score = score_match(
+        ScoreInput(
+            candidate_text="BSc Hons in Information Technology",
+            job_text="Bachelor degree required",
+            candidate_skills=[],
+            required_skills=[],
+            preferred_skills=[],
+            candidate_experience_years=0,
+            min_experience_years=0,
+            candidate_education=["bsc"],
+            education_requirements=["bachelor"],
+        )
+    )
+
+    assert score.education_score == 100

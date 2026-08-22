@@ -34,17 +34,13 @@ SKILL_CANONICAL = {
     "kubernetes": ["kubernetes", "k8s"],
 }
 
-DEGREES = [
-    "phd",
-    "doctorate",
-    "master",
-    "msc",
-    "mba",
-    "bachelor",
-    "bsc",
-    "degree",
-    "diploma",
-]
+EDUCATION_CANONICAL = {
+    "phd": ["phd", "doctorate", "doctoral"],
+    "master": ["master", "masters", "msc", "mba", "m.sc"],
+    "bachelor": ["bachelor", "bachelors", "bsc", "b.sc", "undergraduate"],
+    "degree": ["degree"],
+    "diploma": ["diploma"],
+}
 
 
 @dataclass(frozen=True)
@@ -112,7 +108,13 @@ def extract_skills(text: str) -> list[str]:
 
 def extract_education(text: str) -> list[str]:
     lowered = text.lower()
-    found = [degree for degree in DEGREES if _contains_phrase(lowered, degree)]
+    found = [
+        canonical
+        for canonical, aliases in EDUCATION_CANONICAL.items()
+        if any(_contains_phrase(lowered, alias) for alias in aliases)
+    ]
+    if "bachelor" in found:
+        found = [degree for degree in found if degree != "degree"]
     return sorted(set(found))
 
 

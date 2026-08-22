@@ -4,6 +4,19 @@ import re
 from collections import Counter
 
 
+EDUCATION_EQUIVALENTS = {
+    "degree": {"degree", "bachelor", "bsc", "master", "msc", "mba", "phd", "doctorate"},
+    "bachelor": {"degree", "bachelor", "bsc", "master", "msc", "mba", "phd", "doctorate"},
+    "bsc": {"degree", "bachelor", "bsc", "master", "msc", "mba", "phd", "doctorate"},
+    "master": {"master", "msc", "mba", "phd", "doctorate"},
+    "msc": {"master", "msc", "phd", "doctorate"},
+    "mba": {"master", "mba", "phd", "doctorate"},
+    "phd": {"phd", "doctorate"},
+    "doctorate": {"phd", "doctorate"},
+    "diploma": {"diploma"},
+}
+
+
 @dataclass(frozen=True)
 class ScoreInput:
     candidate_text: str
@@ -113,9 +126,24 @@ def _experience_fit(candidate_years: float, required_years: float) -> float:
 def _education_fit(candidate_education: list[str], requirements: list[str]) -> float:
     if not requirements:
         return 1.0
-    candidate = set(candidate_education)
-    required = set(requirements)
-    return _ratio(len(candidate & required), len(required))
+    candidate = {_normalize_education(value) for value in candidate_education}
+    required = {_normalize_education(value) for value in requirements}
+    matches = sum(1 for requirement in required if candidate & EDUCATION_EQUIVALENTS.get(requirement, {requirement}))
+    return _ratio(matches, len(required))
+
+
+def _normalize_education(value: str) -> str:
+    lowered = value.lower().strip()
+    aliases = {
+        "b.sc": "bsc",
+        "b.sc.": "bsc",
+        "bachelors": "bachelor",
+        "masters": "master",
+        "m.sc": "msc",
+        "m.sc.": "msc",
+        "doctoral": "doctorate",
+    }
+    return aliases.get(lowered, lowered)
 
 
 def _ratio(numerator: int, denominator: int) -> float:

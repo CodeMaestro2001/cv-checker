@@ -17,6 +17,7 @@ from app.services.repository import (
     candidate_to_schema,
     create_candidate,
     create_job,
+    delete_candidate,
     job_to_schema,
     match_to_schema,
     save_match,
@@ -89,6 +90,16 @@ def get_candidate(candidate_id: int, db: Session = Depends(get_db)) -> Candidate
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     return candidate_to_schema(candidate)
+
+
+@router.delete("/candidates/{candidate_id}", status_code=204)
+def remove_candidate(candidate_id: int, db: Session = Depends(get_db)) -> None:
+    candidate = db.scalar(
+        select(models.Candidate).options(joinedload(models.Candidate.profile)).where(models.Candidate.id == candidate_id)
+    )
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    delete_candidate(db, candidate)
 
 
 @router.post("/matches/score", response_model=MatchRead)

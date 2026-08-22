@@ -26,6 +26,11 @@ def api_post(path: str, json=None, files=None):
     return response.json()
 
 
+def api_delete(path: str):
+    response = requests.delete(f"{API_BASE_URL}{path}", timeout=30)
+    response.raise_for_status()
+
+
 def load_jobs():
     try:
         return api_get("/jobs")
@@ -142,16 +147,28 @@ with right:
 st.divider()
 st.subheader("Candidate Inventory")
 if candidates:
-    inventory = [
-        {
-            "Name": candidate["full_name"],
-            "Email": candidate["email"],
-            "Experience": candidate["experience_years"],
-            "Skills": ", ".join(candidate["skills"]),
-            "File": candidate["source_filename"],
-        }
-        for candidate in candidates
-    ]
-    st.dataframe(inventory, hide_index=True)
+    header_cols = st.columns([0.18, 0.2, 0.08, 0.34, 0.14, 0.06])
+    header_cols[0].markdown("**Name**")
+    header_cols[1].markdown("**Email**")
+    header_cols[2].markdown("**Experience**")
+    header_cols[3].markdown("**Skills**")
+    header_cols[4].markdown("**File**")
+    header_cols[5].markdown("**Remove**")
+
+    for candidate in candidates:
+        row_cols = st.columns([0.18, 0.2, 0.08, 0.34, 0.14, 0.06])
+        row_cols[0].write(candidate["full_name"])
+        row_cols[1].write(candidate["email"] or "-")
+        row_cols[2].write(candidate["experience_years"])
+        row_cols[3].write(", ".join(candidate["skills"]) or "-")
+        row_cols[4].write(candidate["source_filename"])
+        if row_cols[5].button("Remove", key=f"remove_candidate_{candidate['id']}"):
+            try:
+                api_delete(f"/candidates/{candidate['id']}")
+                st.session_state.pop("rankings", None)
+                st.success(f"Removed {candidate['full_name']}")
+                st.rerun()
+            except requests.RequestException as exc:
+                st.error(f"Could not remove {candidate['full_name']}: {exc}")
 else:
     st.write("No candidates uploaded yet.")

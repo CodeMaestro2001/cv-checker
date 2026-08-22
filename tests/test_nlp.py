@@ -28,3 +28,9 @@ def test_extract_job_required_and_preferred_skills():
     assert "python" in job.required_skills
     assert "xgboost" in job.preferred_skills
     assert job.min_experience_years == 3
+
+
+def test_extract_profile_normalizes_bsc_as_bachelor():
+    profile = extract_profile("Tharusha Rathnayaka\nBSc (Hons) in Information Technology")
+
+    assert profile.education == ["bachelor"]
