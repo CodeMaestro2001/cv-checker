@@ -52,6 +52,13 @@ def create_job(db: Session, title: str, company: str | None, raw_text: str, job_
     return job
 
 
+def delete_job(db: Session, job: models.JobDescription) -> None:
+    job_id = job.id
+    create_audit_event(db, "job_deleted", "job", job_id, {"title": job.title})
+    db.delete(job)
+    db.commit()
+
+
 def delete_candidate(db: Session, candidate: models.Candidate) -> None:
     candidate_id = candidate.id
     create_audit_event(db, "candidate_deleted", "candidate", candidate_id, {"filename": candidate.source_filename})

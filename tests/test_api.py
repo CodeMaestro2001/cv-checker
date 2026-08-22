@@ -75,3 +75,13 @@ def test_end_to_end_api_flow(client: TestClient):
     candidates_response = client.get("/candidates")
     assert candidates_response.status_code == 200
     assert candidates_response.json() == []
+
+    delete_job_response = client.delete(f"/jobs/{job['id']}")
+    assert delete_job_response.status_code == 204
+
+    missing_job_response = client.get(f"/jobs/{job['id']}")
+    assert missing_job_response.status_code == 404
+
+    jobs_response = client.get("/jobs")
+    assert jobs_response.status_code == 200
+    assert jobs_response.json() == []

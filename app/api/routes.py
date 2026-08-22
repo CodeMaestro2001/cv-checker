@@ -18,6 +18,7 @@ from app.services.repository import (
     create_candidate,
     create_job,
     delete_candidate,
+    delete_job,
     job_to_schema,
     match_to_schema,
     save_match,
@@ -52,6 +53,14 @@ def get_job(job_id: int, db: Session = Depends(get_db)) -> JobRead:
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job_to_schema(job)
+
+
+@router.delete("/jobs/{job_id}", status_code=204)
+def remove_job(job_id: int, db: Session = Depends(get_db)) -> None:
+    job = db.get(models.JobDescription, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    delete_job(db, job)
 
 
 @router.post("/candidates/upload", response_model=CandidateRead)

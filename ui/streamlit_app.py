@@ -93,8 +93,19 @@ with right:
         st.info("Create a job description to begin ranking candidates.")
     else:
         job_options = {f"#{job['id']} - {job['title']}": job["id"] for job in jobs}
-        selected_label = st.selectbox("Active job", list(job_options.keys()))
+        job_select_col, job_remove_col = st.columns([0.82, 0.18], vertical_alignment="bottom")
+        selected_label = job_select_col.selectbox("Active job", list(job_options.keys()))
         selected_job_id = job_options[selected_label]
+        selected_job = next(job for job in jobs if job["id"] == selected_job_id)
+
+        if job_remove_col.button("Remove job", key=f"remove_job_{selected_job_id}"):
+            try:
+                api_delete(f"/jobs/{selected_job_id}")
+                st.session_state.pop("rankings", None)
+                st.success(f"Removed job #{selected_job_id}: {selected_job['title']}")
+                st.rerun()
+            except requests.RequestException as exc:
+                st.error(f"Could not remove job: {exc}")
 
         metric_cols = st.columns(3)
         metric_cols[0].metric("Jobs", len(jobs))
